@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { FilePicker } from '../components/FilePicker';
 import { FolderPicker } from '../components/FolderPicker';
@@ -16,7 +16,6 @@ export const AddAudioToVideo: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progress, setProgress] = useState<string>('');
   const [result, setResult] = useState<ProcessResult | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleProcess = async () => {
     if (!videoFile || !audioFile || !outputFolder) {
@@ -30,13 +29,11 @@ export const AddAudioToVideo: React.FC = () => {
     setIsProcessing(true);
     setResult(null);
     setProgress('Starting video processing...');
-    
-    // Create abort controller for cancellation
-    abortControllerRef.current = new AbortController();
 
     try {
-      // Construct output path with output.mp4 filename
-      const outputPath = `${outputFolder}/output.mp4`;
+      // Extract video filename without extension and construct output path
+      const videoFileName = videoFile.split('/').pop()?.split('.')[0] || 'output';
+      const outputPath = `${outputFolder}/${videoFileName}_with_audio.mp4`;
       
       setProgress('Processing video and audio...');
       
@@ -49,39 +46,16 @@ export const AddAudioToVideo: React.FC = () => {
         }
       });
 
-      if (abortControllerRef.current?.signal.aborted) {
-        setResult({
-          success: false,
-          message: 'Process was cancelled'
-        });
-        return;
-      }
-
       setProgress('Video processing completed!');
       setResult(response);
     } catch (error) {
-      if (abortControllerRef.current?.signal.aborted) {
-        setResult({
-          success: false,
-          message: 'Process was cancelled'
-        });
-      } else {
-        setResult({
-          success: false,
-          message: `Error: ${error}`
-        });
-      }
+      setResult({
+        success: false,
+        message: `Error: ${error}`
+      });
     } finally {
       setIsProcessing(false);
       setProgress('');
-      abortControllerRef.current = null;
-    }
-  };
-
-  const handleCancel = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setProgress('Cancelling...');
     }
   };
 
@@ -140,15 +114,6 @@ export const AddAudioToVideo: React.FC = () => {
             >
               {isProcessing ? 'Processing...' : 'Add Audio to Video'}
             </button>
-            
-            {isProcessing && (
-              <button
-                onClick={handleCancel}
-                className="px-6 py-3 bg-[#1A1B1E] hover:bg-[#2A2B2E] text-gray-300 font-medium rounded-xl border border-[#2A2B2E] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-[#0D0E10]"
-              >
-                Cancel
-              </button>
-            )}
           </div>
 
           {result && (
