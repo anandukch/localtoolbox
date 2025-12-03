@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getDefaultPath } from '../utils/pathUtils';
 
 interface FolderPickerProps {
   label: string;
@@ -26,7 +27,8 @@ export const FolderPicker: React.FC<FolderPickerProps> = ({
         
         const selected = await open({
           directory: true,
-          multiple: false
+          multiple: false,
+          defaultPath: await getDefaultPath()
         });
 
         if (selected && typeof selected === 'string') {

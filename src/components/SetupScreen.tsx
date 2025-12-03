@@ -8,6 +8,7 @@ interface SetupScreenProps {
 interface SetupStatus {
   python: 'checking' | 'found' | 'missing';
   moviepy: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
+  pillow: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   ffmpeg: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
 }
 
@@ -15,6 +16,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
   const [status, setStatus] = useState<SetupStatus>({
     python: 'checking',
     moviepy: 'checking',
+    pillow: 'checking',
     ffmpeg: 'checking'
   });
   const [isInstalling, setIsInstalling] = useState(false);
@@ -45,9 +47,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         } else {
           addToLog('✗ MoviePy not found');
         }
+        
+        // Check Pillow
+        const pillowCheck = await invoke<{success: boolean}>('check_pillow');
+        setStatus(prev => ({ ...prev, pillow: pillowCheck.success ? 'found' : 'missing' }));
+        
+        if (pillowCheck.success) {
+          addToLog('✓ Pillow found');
+        } else {
+          addToLog('✗ Pillow not found');
+        }
       } else {
         addToLog('✗ Python 3 not found');
-        setStatus(prev => ({ ...prev, moviepy: 'missing' }));
+        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing' }));
       }
       
       // Check FFmpeg
@@ -88,6 +100,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         }
       }
       
+      // Install Pillow if missing
+      if (status.pillow === 'missing') {
+        setStatus(prev => ({ ...prev, pillow: 'installing' }));
+        addToLog('Installing Pillow...');
+        
+        const pillowResult = await invoke<{success: boolean, message: string}>('install_pillow');
+        
+        if (pillowResult.success) {
+          setStatus(prev => ({ ...prev, pillow: 'installed' }));
+          addToLog('✓ Pillow installed successfully');
+        } else {
+          setStatus(prev => ({ ...prev, pillow: 'missing' }));
+          addToLog(`✗ Failed to install Pillow: ${pillowResult.message}`);
+          setError(`Failed to install Pillow: ${pillowResult.message}`);
+        }
+      }
+      
       // Install FFmpeg if missing (this might require sudo)
       if (status.ffmpeg === 'missing') {
         setStatus(prev => ({ ...prev, ffmpeg: 'installing' }));
@@ -115,11 +144,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
 
   const canProceed = () => {
     return status.python === 'found' && 
-           (status.moviepy === 'found' || status.moviepy === 'installed');
+           (status.moviepy === 'found' || status.moviepy === 'installed') &&
+           (status.pillow === 'found' || status.pillow === 'installed');
   };
 
   const needsInstallation = () => {
-    return status.moviepy === 'missing' || status.ffmpeg === 'missing';
+    return status.moviepy === 'missing' || status.pillow === 'missing' || status.ffmpeg === 'missing';
   };
 
   useEffect(() => {
@@ -181,6 +211,14 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
               <div className="flex items-center space-x-2">
                 {getStatusIcon(status.moviepy)}
                 <span className="text-sm text-gray-400 capitalize">{status.moviepy}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Pillow (PIL)</span>
+              <div className="flex items-center space-x-2">
+                {getStatusIcon(status.pillow)}
+                <span className="text-sm text-gray-400 capitalize">{status.pillow}</span>
               </div>
             </div>
             

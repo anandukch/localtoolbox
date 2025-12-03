@@ -8,6 +8,7 @@ use std::fs;
 fn get_embedded_script(tool: &str, script_name: &str) -> Option<&'static str> {
     match (tool, script_name) {
         ("video_add_audio", "addaudio") => Some(include_str!("../../tools/video_add_audio/addaudio.py")),
+        ("image_compressor", "compress") => Some(include_str!("../../tools/image_compressor/compress.py")),
         _ => None,
     }
 }
@@ -59,10 +60,10 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
             if let Some(path) = found_path {
                 path
             } else {
-                // If none found, try development path
-                let dev_path = format!("../tools/{}/{}.py", tool, script_name);
-                if std::path::Path::new(&dev_path).exists() {
-                    dev_path
+                // If none found, try development path (relative to executable)
+                let dev_path = exe_dir.join("..").join("tools").join(&tool).join(format!("{}.py", script_name));
+                if dev_path.exists() {
+                    dev_path.to_string_lossy().to_string()
                 } else {
                     // Last resort: install script to user's local directory
                     if let Some(script_content) = get_embedded_script(&tool, script_name) {
@@ -214,6 +215,24 @@ pub async fn check_ffmpeg() -> Result<serde_json::Value, String> {
     }
 }
 
+/// Check if Pillow (PIL) is installed
+#[tauri::command]
+pub async fn check_pillow() -> Result<serde_json::Value, String> {
+    let output = Command::new("/usr/bin/python3")
+        .arg("-c")
+        .arg("import PIL")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({"success": true}))
+        }
+        _ => Ok(serde_json::json!({"success": false}))
+    }
+}
+
 /// Install MoviePy using pip
 #[tauri::command]
 pub async fn install_moviepy() -> Result<serde_json::Value, String> {
@@ -262,6 +281,67 @@ pub async fn install_moviepy() -> Result<serde_json::Value, String> {
                     Ok(serde_json::json!({
                         "success": false,
                         "message": format!("Failed to install MoviePy: {}", stderr)
+                    }))
+                }
+            }
+        }
+        Err(e) => {
+            Ok(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to run pip: {}", e)
+            }))
+        }
+    }
+}
+
+/// Install Pillow using pip
+#[tauri::command]
+pub async fn install_pillow() -> Result<serde_json::Value, String> {
+    // Try user installation first with clean environment
+    let output = Command::new("/usr/bin/python3")
+        .arg("-m")
+        .arg("pip")
+        .arg("install")
+        .arg("Pillow")
+        .arg("--user")
+        .arg("--break-system-packages")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .env("PYTHONUNBUFFERED", "1")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({
+                "success": true,
+                "message": "Pillow installed successfully"
+            }))
+        }
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            // Try without --break-system-packages
+            let fallback_output = Command::new("/usr/bin/python3")
+                .arg("-m")
+                .arg("pip")
+                .arg("install")
+                .arg("Pillow")
+                .arg("--user")
+                .env_remove("PYTHONHOME")
+                .env_remove("PYTHONPATH")
+                .env("PYTHONUNBUFFERED", "1")
+                .output();
+            
+            match fallback_output {
+                Ok(fallback_output) if fallback_output.status.success() => {
+                    Ok(serde_json::json!({
+                        "success": true,
+                        "message": "Pillow installed successfully"
+                    }))
+                }
+                _ => {
+                    Ok(serde_json::json!({
+                        "success": false,
+                        "message": format!("Failed to install Pillow: {}", stderr)
                     }))
                 }
             }

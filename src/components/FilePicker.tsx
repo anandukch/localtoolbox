@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getDefaultPath } from '../utils/pathUtils';
 
 interface FilePickerProps {
   label: string;
@@ -27,10 +28,27 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         const { open } = await import('@tauri-apps/plugin-dialog');
         
         // Convert accept string to file extensions array for filters
-        const extensions = accept ? accept.split(',').map(ext => ext.trim().replace('.', '')) : undefined;
+        let extensions: string[] | undefined;
+        
+        if (accept) {
+          if (accept.includes('image/*')) {
+            // For image/* MIME type, use common image extensions
+            extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'ico'];
+          } else if (accept.includes('video/*')) {
+            // For video/* MIME type, use common video extensions
+            extensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm', 'm4v'];
+          } else if (accept.includes('audio/*')) {
+            // For audio/* MIME type, use common audio extensions
+            extensions = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma'];
+          } else {
+            // For specific extensions like .pdf,.txt
+            extensions = accept.split(',').map(ext => ext.trim().replace('.', ''));
+          }
+        }
         
         const selected = await open({
           multiple: false,
+          defaultPath: await getDefaultPath(),
           filters: extensions ? [{
             name: 'Supported files',
             extensions
