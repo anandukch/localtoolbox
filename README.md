@@ -1,10 +1,10 @@
 # LocalToolbox
 
-A cross-platform desktop application that bundles multiple developer and creator tools for offline use. Built with Tauri (Rust), React, and Python for powerful media processing capabilities.
+A desktop tool that bundles multiple developer and creator tools for offline use. Built with Tauri (Rust), React, and Python for powerful media processing capabilities.
 
 ## 🚀 Features
 
-- **Cross-platform**: Works on Windows, macOS, and Linux
+- **Linux-native**: Currently builds and runs on Linux (Windows/macOS support planned)
 - **Offline-first**: All processing happens locally on your machine
 - **Extensible**: Easy to add new tools
 - **Modern UI**: Clean, responsive interface built with React and Tailwind CSS
@@ -60,8 +60,6 @@ Python Tools (Individual scripts)
 - **Python 3.8+** with pip
 - **System dependencies** for video processing:
   - **Linux**: `sudo apt install ffmpeg`
-  - **macOS**: `brew install ffmpeg`
-  - **Windows**: Download FFmpeg and add to PATH
 
 ## 🛠️ Installation
 
@@ -102,7 +100,7 @@ This will:
 npm run tauri build
 ```
 
-This creates platform-specific binaries in `src-tauri/target/release/bundle/`.
+This creates Linux binaries in `src-tauri/target/release/bundle/`.
 
 
 ## 📁 Project Structure
@@ -137,7 +135,7 @@ localtoolbox/
 
 ### Python Tool Not Found
 - Ensure the Python script exists in `tools/{tool_name}/{tool_name}.py`
-- Check that Python is installed and accessible as `python3` (Linux/macOS) or `python` (Windows)
+- Check that Python is installed and accessible as `python3`
 
 ### FFmpeg Not Found
 - Install FFmpeg system-wide
