@@ -6,6 +6,7 @@ import { AddAudioToVideo } from "./tools/AddAudioToVideo";
 import { ImageCompressor } from "./tools/ImageCompressor";
 import { PDFMerger } from "./tools/PDFMerger";
 import { PortScanner } from "./tools/PortScanner";
+import { JSONFormatter } from "./tools/JSONFormatter";
 import { invoke } from '@tauri-apps/api/core';
 
 // Define available tools
@@ -47,6 +48,16 @@ const AVAILABLE_TOOLS = [
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+      </svg>
+    )
+  },
+  {
+    id: 'json_formatter',
+    title: 'JSON Formatter',
+    description: 'Pretty-print and validate JSON',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
       </svg>
     )
   }
@@ -121,6 +132,8 @@ function App() {
         return <PDFMerger />;
       case 'port_scanner':
         return <PortScanner />;
+      case 'json_formatter':
+        return <JSONFormatter />;
       default:
         return (
           <div className="flex-1 flex items-center justify-center bg-[#0D0E10]">
