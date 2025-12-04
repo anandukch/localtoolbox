@@ -9,6 +9,7 @@ fn get_embedded_script(tool: &str, script_name: &str) -> Option<&'static str> {
     match (tool, script_name) {
         ("video_add_audio", "addaudio") => Some(include_str!("../../tools/video_add_audio/addaudio.py")),
         ("image_compressor", "compress") => Some(include_str!("../../tools/image_compressor/compress.py")),
+        ("pdf_merger", "merge") => Some(include_str!("../../tools/pdf_merger/merge.py")),
         _ => None,
     }
 }
@@ -27,6 +28,7 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
     let script_name = match tool.as_str() {
         "video_add_audio" => "addaudio",
         "image_compressor" => "compress",
+        "pdf_merger" => "merge",
         _ => &tool.replace("_", ""),
     };
 
@@ -215,6 +217,24 @@ pub async fn check_ffmpeg() -> Result<serde_json::Value, String> {
     }
 }
 
+/// Check if PyPDF2 is installed
+#[tauri::command]
+pub async fn check_pypdf2() -> Result<serde_json::Value, String> {
+    let output = Command::new("/usr/bin/python3")
+        .arg("-c")
+        .arg("import PyPDF2")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({"success": true}))
+        }
+        _ => Ok(serde_json::json!({"success": false}))
+    }
+}
+
 /// Check if Pillow (PIL) is installed
 #[tauri::command]
 pub async fn check_pillow() -> Result<serde_json::Value, String> {
@@ -281,6 +301,67 @@ pub async fn install_moviepy() -> Result<serde_json::Value, String> {
                     Ok(serde_json::json!({
                         "success": false,
                         "message": format!("Failed to install MoviePy: {}", stderr)
+                    }))
+                }
+            }
+        }
+        Err(e) => {
+            Ok(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to run pip: {}", e)
+            }))
+        }
+    }
+}
+
+/// Install PyPDF2 using pip
+#[tauri::command]
+pub async fn install_pypdf2() -> Result<serde_json::Value, String> {
+    // Try user installation first with clean environment
+    let output = Command::new("/usr/bin/python3")
+        .arg("-m")
+        .arg("pip")
+        .arg("install")
+        .arg("PyPDF2")
+        .arg("--user")
+        .arg("--break-system-packages")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .env("PYTHONUNBUFFERED", "1")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({
+                "success": true,
+                "message": "PyPDF2 installed successfully"
+            }))
+        }
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            // Try without --break-system-packages
+            let fallback_output = Command::new("/usr/bin/python3")
+                .arg("-m")
+                .arg("pip")
+                .arg("install")
+                .arg("PyPDF2")
+                .arg("--user")
+                .env_remove("PYTHONHOME")
+                .env_remove("PYTHONPATH")
+                .env("PYTHONUNBUFFERED", "1")
+                .output();
+            
+            match fallback_output {
+                Ok(fallback_output) if fallback_output.status.success() => {
+                    Ok(serde_json::json!({
+                        "success": true,
+                        "message": "PyPDF2 installed successfully"
+                    }))
+                }
+                _ => {
+                    Ok(serde_json::json!({
+                        "success": false,
+                        "message": format!("Failed to install PyPDF2: {}", stderr)
                     }))
                 }
             }
@@ -387,6 +468,52 @@ pub async fn install_ffmpeg() -> Result<serde_json::Value, String> {
             }))
         }
     }
+}
+
+/// Open a folder in the system file manager
+#[tauri::command]
+pub async fn open_folder(path: String) -> Result<(), String> {
+    use std::process::Command;
+    
+    #[cfg(target_os = "linux")]
+    {
+        // Try multiple file managers in order of preference
+        let file_managers = ["nautilus", "dolphin", "thunar", "pcmanfm", "nemo", "caja"];
+        
+        let mut success = false;
+        for fm in &file_managers {
+            if let Ok(_) = Command::new(fm).arg(&path).spawn() {
+                success = true;
+                break;
+            }
+        }
+        
+        // If no specific file manager worked, try xdg-open as last resort
+        if !success {
+            Command::new("xdg-open")
+                .arg(&path)
+                .spawn()
+                .map_err(|e| format!("Failed to open folder: {}", e))?;
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+    }
+    
+    Ok(())
 }
 
 /// Get the list of available tools

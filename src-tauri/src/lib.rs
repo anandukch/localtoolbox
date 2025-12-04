@@ -20,9 +20,12 @@ pub fn run() {
             python_bridge::check_moviepy,
             python_bridge::check_ffmpeg,
             python_bridge::check_pillow,
+            python_bridge::check_pypdf2,
             python_bridge::install_moviepy,
             python_bridge::install_ffmpeg,
-            python_bridge::install_pillow
+            python_bridge::install_pillow,
+            python_bridge::install_pypdf2,
+            python_bridge::open_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -9,6 +9,7 @@ interface SetupStatus {
   python: 'checking' | 'found' | 'missing';
   moviepy: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   pillow: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
+  pypdf2: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   ffmpeg: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
 }
 
@@ -17,6 +18,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
     python: 'checking',
     moviepy: 'checking',
     pillow: 'checking',
+    pypdf2: 'checking',
     ffmpeg: 'checking'
   });
   const [isInstalling, setIsInstalling] = useState(false);
@@ -57,9 +59,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         } else {
           addToLog('✗ Pillow not found');
         }
+        
+        // Check PyPDF2
+        const pypdf2Check = await invoke<{success: boolean}>('check_pypdf2');
+        setStatus(prev => ({ ...prev, pypdf2: pypdf2Check.success ? 'found' : 'missing' }));
+        
+        if (pypdf2Check.success) {
+          addToLog('✓ PyPDF2 found');
+        } else {
+          addToLog('✗ PyPDF2 not found');
+        }
       } else {
         addToLog('✗ Python 3 not found');
-        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing' }));
+        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing', pypdf2: 'missing' }));
       }
       
       // Check FFmpeg
@@ -117,6 +129,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         }
       }
       
+      // Install PyPDF2 if missing
+      if (status.pypdf2 === 'missing') {
+        setStatus(prev => ({ ...prev, pypdf2: 'installing' }));
+        addToLog('Installing PyPDF2...');
+        
+        const pypdf2Result = await invoke<{success: boolean, message: string}>('install_pypdf2');
+        
+        if (pypdf2Result.success) {
+          setStatus(prev => ({ ...prev, pypdf2: 'installed' }));
+          addToLog('✓ PyPDF2 installed successfully');
+        } else {
+          setStatus(prev => ({ ...prev, pypdf2: 'missing' }));
+          addToLog(`✗ Failed to install PyPDF2: ${pypdf2Result.message}`);
+          setError(`Failed to install PyPDF2: ${pypdf2Result.message}`);
+        }
+      }
+      
       // Install FFmpeg if missing (this might require sudo)
       if (status.ffmpeg === 'missing') {
         setStatus(prev => ({ ...prev, ffmpeg: 'installing' }));
@@ -145,11 +174,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
   const canProceed = () => {
     return status.python === 'found' && 
            (status.moviepy === 'found' || status.moviepy === 'installed') &&
-           (status.pillow === 'found' || status.pillow === 'installed');
+           (status.pillow === 'found' || status.pillow === 'installed') &&
+           (status.pypdf2 === 'found' || status.pypdf2 === 'installed');
   };
 
   const needsInstallation = () => {
-    return status.moviepy === 'missing' || status.pillow === 'missing' || status.ffmpeg === 'missing';
+    return status.moviepy === 'missing' || status.pillow === 'missing' || status.pypdf2 === 'missing' || status.ffmpeg === 'missing';
   };
 
   useEffect(() => {
@@ -219,6 +249,14 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
               <div className="flex items-center space-x-2">
                 {getStatusIcon(status.pillow)}
                 <span className="text-sm text-gray-400 capitalize">{status.pillow}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">PyPDF2</span>
+              <div className="flex items-center space-x-2">
+                {getStatusIcon(status.pypdf2)}
+                <span className="text-sm text-gray-400 capitalize">{status.pypdf2}</span>
               </div>
             </div>
             
