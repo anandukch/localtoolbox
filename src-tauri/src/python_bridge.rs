@@ -10,6 +10,7 @@ fn get_embedded_script(tool: &str, script_name: &str) -> Option<&'static str> {
         ("video_add_audio", "addaudio") => Some(include_str!("../../tools/video_add_audio/addaudio.py")),
         ("image_compressor", "compress") => Some(include_str!("../../tools/image_compressor/compress.py")),
         ("pdf_merger", "merge") => Some(include_str!("../../tools/pdf_merger/merge.py")),
+        ("port_scanner", "scan") => Some(include_str!("../../tools/port_scanner/scan.py")),
         _ => None,
     }
 }
@@ -29,6 +30,7 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
         "video_add_audio" => "addaudio",
         "image_compressor" => "compress",
         "pdf_merger" => "merge",
+        "port_scanner" => "scan",
         _ => &tool.replace("_", ""),
     };
 
