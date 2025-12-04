@@ -7,6 +7,7 @@ import { ImageCompressor } from "./tools/ImageCompressor";
 import { PDFMerger } from "./tools/PDFMerger";
 import { PortScanner } from "./tools/PortScanner";
 import { JSONFormatter } from "./tools/JSONFormatter";
+import { QRCodeGenerator } from "./tools/QRCodeGenerator";
 import { invoke } from '@tauri-apps/api/core';
 
 // Define available tools
@@ -58,6 +59,16 @@ const AVAILABLE_TOOLS = [
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+      </svg>
+    )
+  },
+  {
+    id: 'qr_generator',
+    title: 'QR Code Generator',
+    description: 'Create QR codes from text/URLs',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
       </svg>
     )
   }
@@ -134,9 +145,11 @@ function App() {
         return <PortScanner />;
       case 'json_formatter':
         return <JSONFormatter />;
+      case 'qr_generator':
+        return <QRCodeGenerator />;
       default:
         return (
-          <div className="flex-1 flex items-center justify-center bg-[#0D0E10]">
+          <div className="flex-1 flex items-center justify-center bg-[#0D0E10] p-8">
             <div className="text-center max-w-2xl px-8">
               {/* Hero Icon */}
               <div className="mb-8">
