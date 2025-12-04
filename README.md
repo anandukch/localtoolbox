@@ -9,10 +9,39 @@ A cross-platform desktop application that bundles multiple developer and creator
 - **Extensible**: Easy to add new tools
 - **Modern UI**: Clean, responsive interface built with React and Tailwind CSS
 - **Fast**: Rust backend with Python processing engines
+- **Zero dependencies**: Client-side tools require no additional installations
 
-### Available Tools
+## 🛠️ Available Tools
+
+### 🎥 Media Processing
 
 - **Add Audio to Video**: Combine video files with audio tracks using MoviePy
+- **Image Compressor**: Reduce image file sizes while maintaining quality
+- **Image Format Converter**: Convert between PNG, JPG, and WebP formats with quality control
+
+### 📄 Document Tools
+
+- **PDF Merger**: Combine multiple PDF files into a single document
+- **JSON Formatter**: Pretty-print, validate, and analyze JSON data
+
+### 🔧 Developer Tools
+
+- **Port Scanner**: Check open ports on localhost with process identification
+- **QR Code Generator**: Create QR codes for text, URLs, WiFi, contacts, and more
+
+### 📊 Implementation Details
+
+| Tool | Implementation | Dependencies | Size Impact |
+|------|---------------|--------------|-------------|
+| Add Audio to Video | Python (MoviePy) | MoviePy, FFmpeg | 0KB (runtime install) |
+| Image Compressor | Python (Pillow) | Pillow | 0KB (runtime install) |
+| PDF Merger | Python (PyPDF2) | PyPDF2 | 0KB (runtime install) |
+| Port Scanner | Python (socket) | Built-in | 0KB |
+| JSON Formatter | Client-side React | None | 0KB |
+| QR Code Generator | Client-side React | qrcode-generator | +15KB |
+| Image Format Converter | Client-side React | Canvas API | 0KB |
+
+> **Note**: Python tools use runtime dependency installation, keeping the initial app download small (~50MB) while ensuring all functionality is available after first-time setup.
 
 ## 🏗️ Architecture
 
@@ -75,108 +104,6 @@ npm run tauri build
 
 This creates platform-specific binaries in `src-tauri/target/release/bundle/`.
 
-## 🔧 Adding New Tools
-
-### 1. Create Python Tool
-
-Create a new directory in `tools/` with your tool name:
-
-```bash
-mkdir tools/my_new_tool
-```
-
-Create the Python script (e.g., `tools/my_new_tool/mynew.py`):
-
-```python
-#!/usr/bin/env python3
-import json
-import sys
-
-def main():
-    try:
-        # Read JSON input from stdin
-        data = json.loads(sys.stdin.read())
-        
-        # Your tool logic here
-        # Process data['input_param1'], data['input_param2'], etc.
-        
-        # Return success response
-        result = {
-            "success": True,
-            "message": "Task completed successfully",
-            "output_path": "/path/to/output"
-        }
-        print(json.dumps(result))
-        
-    except Exception as e:
-        # Return error response
-        error_result = {
-            "success": False,
-            "message": f"Error: {str(e)}"
-        }
-        print(json.dumps(error_result))
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-```
-
-### 2. Create React UI Component
-
-Create a new component in `src/tools/`:
-
-```tsx
-// src/tools/MyNewTool.tsx
-import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { Button } from '../components/Button';
-
-export const MyNewTool: React.FC = () => {
-  const [result, setResult] = useState(null);
-  
-  const handleProcess = async () => {
-    try {
-      const response = await invoke('run_python_tool', {
-        tool: 'my_new_tool',
-        params: {
-          // Your parameters here
-        }
-      });
-      setResult(response);
-    } catch (error) {
-      setResult({ success: false, message: error });
-    }
-  };
-
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">My New Tool</h2>
-      {/* Your UI components here */}
-      <Button onClick={handleProcess}>Run Tool</Button>
-    </div>
-  );
-};
-```
-
-### 3. Register the Tool
-
-Add your tool to `src/App.tsx`:
-
-```tsx
-const AVAILABLE_TOOLS = [
-  // ... existing tools
-  {
-    id: 'my_new_tool',
-    title: 'My New Tool',
-    description: 'Description of what your tool does',
-    icon: <YourIcon />
-  }
-];
-
-// Add to renderToolContent switch statement
-case 'my_new_tool':
-  return <MyNewTool />;
-```
 
 ## 📁 Project Structure
 
@@ -205,32 +132,6 @@ localtoolbox/
 └── package.json                  # Node.js dependencies
 ```
 
-## 🔄 JSON Communication Protocol
-
-### Input Format (Frontend → Python)
-```json
-{
-  "param1": "value1",
-  "param2": "value2"
-}
-```
-
-### Output Format (Python → Frontend)
-```json
-{
-  "success": true,
-  "message": "Operation completed successfully",
-  "output_path": "/path/to/result/file"
-}
-```
-
-### Error Format
-```json
-{
-  "success": false,
-  "message": "Error description"
-}
-```
 
 ## 🐛 Troubleshooting
 
@@ -258,11 +159,8 @@ MIT License - see LICENSE file for details
 3. Add your tool following the guidelines above
 4. Submit a pull request
 
-## 🎯 Roadmap
+## 📚 Documentation
 
-- [ ] Image compression tool
-- [ ] Audio format converter
-- [ ] Video format converter
-- [ ] Batch processing capabilities
-- [ ] Plugin system for external tools
-- [ ] Cloud backup integration (optional)
+- **[Technical Details](./docs/TECHNICAL.md)**: Implementation details for each tool
+- **[Contributing Guide](./docs/CONTRIBUTING.md)**: How to add new tools and contribute
+- **[API Reference](./docs/API.md)**: JSON communication protocol and API documentation
