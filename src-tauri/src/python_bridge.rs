@@ -31,6 +31,7 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
         "image_compressor" => "compress",
         "pdf_merger" => "merge",
         "port_scanner" => "scan",
+        "process_manager" => "manage",
         _ => &tool.replace("_", ""),
     };
 
@@ -64,10 +65,22 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
             if let Some(path) = found_path {
                 path
             } else {
-                // If none found, try development path (relative to executable)
-                let dev_path = exe_dir.join("..").join("tools").join(&tool).join(format!("{}.py", script_name));
-                if dev_path.exists() {
-                    dev_path.to_string_lossy().to_string()
+                // If none found, try development paths (relative to executable)
+                let dev_paths = vec![
+                    exe_dir.join("..").join("..").join("..").join("tools").join(&tool).join(format!("{}.py", script_name)),
+                    exe_dir.join("..").join("tools").join(&tool).join(format!("{}.py", script_name)),
+                ];
+                
+                let mut dev_found = None;
+                for dev_path in dev_paths {
+                    if dev_path.exists() {
+                        dev_found = Some(dev_path.to_string_lossy().to_string());
+                        break;
+                    }
+                }
+                
+                if let Some(path) = dev_found {
+                    path
                 } else {
                     // Last resort: install script to user's local directory
                     if let Some(script_content) = get_embedded_script(&tool, script_name) {
@@ -237,6 +250,24 @@ pub async fn check_pypdf2() -> Result<serde_json::Value, String> {
     }
 }
 
+/// Check if psutil is installed
+#[tauri::command]
+pub async fn check_psutil() -> Result<serde_json::Value, String> {
+    let output = Command::new("/usr/bin/python3")
+        .arg("-c")
+        .arg("import psutil")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({"success": true}))
+        }
+        _ => Ok(serde_json::json!({"success": false}))
+    }
+}
+
 /// Check if Pillow (PIL) is installed
 #[tauri::command]
 pub async fn check_pillow() -> Result<serde_json::Value, String> {
@@ -364,6 +395,67 @@ pub async fn install_pypdf2() -> Result<serde_json::Value, String> {
                     Ok(serde_json::json!({
                         "success": false,
                         "message": format!("Failed to install PyPDF2: {}", stderr)
+                    }))
+                }
+            }
+        }
+        Err(e) => {
+            Ok(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to run pip: {}", e)
+            }))
+        }
+    }
+}
+
+/// Install psutil using pip
+#[tauri::command]
+pub async fn install_psutil() -> Result<serde_json::Value, String> {
+    // Try user installation first with clean environment
+    let output = Command::new("/usr/bin/python3")
+        .arg("-m")
+        .arg("pip")
+        .arg("install")
+        .arg("psutil>=5.8.0")
+        .arg("--user")
+        .arg("--break-system-packages")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .env("PYTHONUNBUFFERED", "1")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({
+                "success": true,
+                "message": "psutil installed successfully"
+            }))
+        }
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            // Try without --break-system-packages
+            let fallback_output = Command::new("/usr/bin/python3")
+                .arg("-m")
+                .arg("pip")
+                .arg("install")
+                .arg("psutil>=5.8.0")
+                .arg("--user")
+                .env_remove("PYTHONHOME")
+                .env_remove("PYTHONPATH")
+                .env("PYTHONUNBUFFERED", "1")
+                .output();
+            
+            match fallback_output {
+                Ok(fallback_output) if fallback_output.status.success() => {
+                    Ok(serde_json::json!({
+                        "success": true,
+                        "message": "psutil installed successfully"
+                    }))
+                }
+                _ => {
+                    Ok(serde_json::json!({
+                        "success": false,
+                        "message": format!("Failed to install psutil: {}", stderr)
                     }))
                 }
             }

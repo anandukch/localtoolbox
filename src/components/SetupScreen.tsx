@@ -11,6 +11,7 @@ interface SetupStatus {
   pillow: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   pypdf2: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   ffmpeg: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
+  psutil: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => {
@@ -19,7 +20,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
     moviepy: 'checking',
     pillow: 'checking',
     pypdf2: 'checking',
-    ffmpeg: 'checking'
+    ffmpeg: 'checking',
+    psutil: 'checking'
   });
   const [isInstalling, setIsInstalling] = useState(false);
   const [installLog, setInstallLog] = useState<string[]>([]);
@@ -69,9 +71,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         } else {
           addToLog('✗ PyPDF2 not found');
         }
+        
+        // Check psutil
+        const psutilCheck = await invoke<{success: boolean}>('check_psutil');
+        setStatus(prev => ({ ...prev, psutil: psutilCheck.success ? 'found' : 'missing' }));
+        
+        if (psutilCheck.success) {
+          addToLog('✓ psutil found');
+        } else {
+          addToLog('✗ psutil not found');
+        }
       } else {
         addToLog('✗ Python 3 not found');
-        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing', pypdf2: 'missing' }));
+        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing', pypdf2: 'missing', psutil: 'missing' }));
       }
       
       // Check FFmpeg
@@ -146,6 +158,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         }
       }
       
+      // Install psutil if missing
+      if (status.psutil === 'missing') {
+        setStatus(prev => ({ ...prev, psutil: 'installing' }));
+        addToLog('Installing psutil...');
+        
+        const psutilResult = await invoke<{success: boolean, message: string}>('install_psutil');
+        
+        if (psutilResult.success) {
+          setStatus(prev => ({ ...prev, psutil: 'installed' }));
+          addToLog('✓ psutil installed successfully');
+        } else {
+          setStatus(prev => ({ ...prev, psutil: 'missing' }));
+          addToLog(`✗ Failed to install psutil: ${psutilResult.message}`);
+          setError(`Failed to install psutil: ${psutilResult.message}`);
+        }
+      }
+      
       // Install FFmpeg if missing (this might require sudo)
       if (status.ffmpeg === 'missing') {
         setStatus(prev => ({ ...prev, ffmpeg: 'installing' }));
@@ -175,11 +204,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
     return status.python === 'found' && 
            (status.moviepy === 'found' || status.moviepy === 'installed') &&
            (status.pillow === 'found' || status.pillow === 'installed') &&
-           (status.pypdf2 === 'found' || status.pypdf2 === 'installed');
+           (status.pypdf2 === 'found' || status.pypdf2 === 'installed') &&
+           (status.psutil === 'found' || status.psutil === 'installed');
   };
 
   const needsInstallation = () => {
-    return status.moviepy === 'missing' || status.pillow === 'missing' || status.pypdf2 === 'missing' || status.ffmpeg === 'missing';
+    return status.moviepy === 'missing' || status.pillow === 'missing' || status.pypdf2 === 'missing' || status.psutil === 'missing' || status.ffmpeg === 'missing';
   };
 
   useEffect(() => {
@@ -257,6 +287,14 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
               <div className="flex items-center space-x-2">
                 {getStatusIcon(status.pypdf2)}
                 <span className="text-sm text-gray-400 capitalize">{status.pypdf2}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">psutil</span>
+              <div className="flex items-center space-x-2">
+                {getStatusIcon(status.psutil)}
+                <span className="text-sm text-gray-400 capitalize">{status.psutil}</span>
               </div>
             </div>
             
