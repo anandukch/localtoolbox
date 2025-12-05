@@ -161,4 +161,4 @@ MIT License - see LICENSE file for details
 
 - **[Technical Details](./docs/TECHNICAL.md)**: Implementation details for each tool
 - **[Contributing Guide](./docs/CONTRIBUTING.md)**: How to add new tools and contribute
-- **[API Reference](./docs/API.md)**: JSON communication protocol and API documentation
+<!-- - **[API Reference](./docs/API.md)**: JSON communication protocol and API documentation -->

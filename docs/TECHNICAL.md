@@ -20,6 +20,7 @@ LocalToolbox uses a hybrid approach combining Python backend processing for comp
 **UI Component**: `src/tools/AddAudioToVideo.tsx`
 
 #### Technical Details
+
 - **Primary Library**: MoviePy for video/audio manipulation
 - **Dependencies**: FFmpeg (system-level), MoviePy (Python)
 - **Processing**: Server-side due to large file handling requirements
@@ -27,6 +28,7 @@ LocalToolbox uses a hybrid approach combining Python backend processing for comp
 - **Output**: Combined video file with merged audio track
 
 #### Why Python Backend?
+
 - **File Size**: Video files can be GB-sized, unsuitable for browser processing
 - **FFmpeg Integration**: MoviePy provides robust FFmpeg bindings
 - **Codec Support**: Handles various video/audio formats natively
@@ -39,12 +41,14 @@ LocalToolbox uses a hybrid approach combining Python backend processing for comp
 **UI Component**: `src/tools/ImageCompressor.tsx`
 
 #### Technical Details
+
 - **Primary Library**: Pillow (PIL) for image processing
 - **Compression**: JPEG quality adjustment, PNG optimization
 - **Batch Processing**: Handles multiple images simultaneously
 - **Format Support**: JPEG, PNG, WebP, BMP, TIFF
 
 #### Why Python Backend?
+
 - **Advanced Algorithms**: Pillow provides professional-grade compression
 - **Format Support**: Extensive format compatibility
 - **Existing Infrastructure**: Leverages already-installed Pillow dependency
@@ -56,6 +60,7 @@ LocalToolbox uses a hybrid approach combining Python backend processing for comp
 **Dependencies**: HTML5 Canvas API (built-in)
 
 #### Technical Details
+
 - **Conversion Engine**: HTML5 Canvas `toBlob()` method
 - **Supported Formats**: PNG ↔ JPG ↔ WebP
 - **Quality Control**: JPEG/WebP compression with quality slider
@@ -63,12 +68,14 @@ LocalToolbox uses a hybrid approach combining Python backend processing for comp
 - **Batch Processing**: Multiple file handling with progress tracking
 
 #### Why Client-side?
+
 - **Zero Dependencies**: Uses built-in browser APIs
 - **Real-time Preview**: Instant conversion feedback
 - **Better UX**: Drag & drop, immediate results
 - **Size Impact**: No additional app size increase
 
 #### Technical Implementation
+
 ```typescript
 // Core conversion logic
 const canvas = document.createElement('canvas');
@@ -93,12 +100,14 @@ img.onload = () => {
 **UI Component**: `src/tools/PDFMerger.tsx`
 
 #### Technical Details
+
 - **Primary Library**: PyPDF2 for PDF manipulation
 - **Processing**: Combines multiple PDF files into single output
 - **Memory Efficient**: Streams PDF data without loading entire files
 - **Metadata Preservation**: Maintains PDF properties and bookmarks
 
 #### Why Python Backend?
+
 - **PDF Complexity**: PDF format requires specialized parsing
 - **PyPDF2 Reliability**: Mature library with extensive format support
 - **File Handling**: Server-side processing better for large documents
@@ -110,18 +119,21 @@ img.onload = () => {
 **Dependencies**: Native JavaScript JSON API
 
 #### Technical Details
+
 - **Validation**: `JSON.parse()` with error catching and line/column reporting
 - **Formatting**: `JSON.stringify()` with configurable indentation
 - **Statistics**: Recursive object analysis for keys, arrays, objects count
 - **File Operations**: Browser File API for upload/download
 
 #### Why Client-side?
+
 - **Pure Data Processing**: No heavy computation required
 - **Real-time Validation**: Instant feedback as user types
 - **Zero Dependencies**: Uses native JavaScript JSON handling
 - **Better UX**: No server round-trips for simple text processing
 
 #### Technical Implementation
+
 ```typescript
 // Validation with detailed error reporting
 const validateJSON = (jsonString: string) => {
@@ -145,12 +157,14 @@ const validateJSON = (jsonString: string) => {
 **UI Component**: `src/tools/PortScanner.tsx`
 
 #### Technical Details
+
 - **Network Operations**: Python socket library for port connectivity testing
 - **Process Identification**: System calls to identify processes using ports
 - **Port Management**: Capability to terminate processes on specific ports
 - **Range Scanning**: Configurable port ranges with concurrent scanning
 
 #### Why Python Backend?
+
 - **System Access**: Requires low-level network and process access
 - **Security Restrictions**: Browser security prevents direct socket operations
 - **Process Control**: System-level operations not available in browser context
@@ -162,6 +176,7 @@ const validateJSON = (jsonString: string) => {
 **Dependencies**: `qrcode-generator` library (~15KB)
 
 #### Technical Details
+
 - **QR Generation**: Pure JavaScript QR code creation
 - **Template System**: Pre-configured templates for WiFi, email, SMS, etc.
 - **Error Correction**: Configurable levels (L/M/Q/H) for damage tolerance
@@ -169,12 +184,14 @@ const validateJSON = (jsonString: string) => {
 - **Real-time Generation**: Updates QR code as user types
 
 #### Why Client-side?
+
 - **Lightweight Task**: QR generation is computationally simple
 - **Real-time Feedback**: Instant preview as user modifies content
 - **Minimal Dependencies**: Only 15KB library addition
 - **Better UX**: No server delays for simple generation
 
 #### Technical Implementation
+
 ```typescript
 // QR generation with error correction
 const generateQR = (text: string, errorCorrection: 'L'|'M'|'Q'|'H') => {
@@ -203,14 +220,16 @@ const generateQR = (text: string, errorCorrection: 'L'|'M'|'Q'|'H') => {
 
 ### Implementation Guidelines
 
-#### Choose Client-side When:
+#### Choose Client-side When
+
 - **Simple data processing** (JSON, text, basic images)
 - **Real-time feedback** required
 - **No system access** needed
 - **Small dependencies** available
 - **Better UX** is priority
 
-#### Choose Python Backend When:
+#### Choose Python Backend When
+
 - **Complex file processing** (video, audio, PDFs)
 - **System operations** required (network, processes)
 - **Specialized libraries** needed (MoviePy, PyPDF2)
@@ -220,12 +239,14 @@ const generateQR = (text: string, errorCorrection: 'L'|'M'|'Q'|'H') => {
 ### Dependency Management Strategy
 
 #### Python Dependencies
+
 - **Runtime Installation**: Dependencies installed during first app run
 - **Setup Screen**: Guided installation with progress tracking
 - **Verification**: Health checks ensure dependencies are available
 - **Size Optimization**: No dependencies bundled with app distribution
 
 #### JavaScript Dependencies
+
 - **Build-time Bundling**: npm packages included in final app bundle
 - **Size Monitoring**: Careful evaluation of package sizes
 - **Tree Shaking**: Unused code eliminated during build
@@ -236,6 +257,7 @@ const generateQR = (text: string, errorCorrection: 'L'|'M'|'Q'|'H') => {
 ### Python Tool Communication
 
 #### Input Format (Frontend → Python)
+
 ```json
 {
   "input_path": "/path/to/input/file",
@@ -248,6 +270,7 @@ const generateQR = (text: string, errorCorrection: 'L'|'M'|'Q'|'H') => {
 ```
 
 #### Success Response (Python → Frontend)
+
 ```json
 {
   "success": true,
@@ -261,6 +284,7 @@ const generateQR = (text: string, errorCorrection: 'L'|'M'|'Q'|'H') => {
 ```
 
 #### Error Response (Python → Frontend)
+
 ```json
 {
   "success": false,
@@ -277,16 +301,19 @@ Client-side tools communicate directly through React state management and browse
 ## 📈 Performance Considerations
 
 ### Memory Management
+
 - **Python Tools**: Process isolation prevents memory leaks
 - **Client-side Tools**: Careful cleanup of object URLs and canvas contexts
 - **File Handling**: Streaming for large files, chunked processing for batches
 
 ### Scalability
+
 - **Concurrent Processing**: Python tools can process multiple requests
 - **Browser Limitations**: Client-side tools limited by browser memory and processing power
 - **Resource Monitoring**: Background monitoring of system resource usage
 
 ### Optimization Strategies
+
 - **Lazy Loading**: Tool components loaded only when needed
 - **Code Splitting**: Separate bundles for different tool categories
 - **Caching**: Intelligent caching of processed results
