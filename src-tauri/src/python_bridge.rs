@@ -33,6 +33,7 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
         "port_scanner" => "scan",
         "process_manager" => "manage",
         "pdf_to_images" => "convert",
+        "system_info" => "info",
         _ => &tool.replace("_", ""),
     };
 

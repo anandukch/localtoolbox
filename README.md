@@ -29,6 +29,7 @@ A desktop tool that bundles multiple developer and creator tools for offline use
 
 - **Port Scanner**: Check open ports on localhost with process identification
 - **Process Manager**: View and manage system processes, similar to top command
+- **System Info**: Display comprehensive hardware and software information
 - **QR Code Generator**: Create QR codes for text, URLs, WiFi, contacts, and more
 
 ### 📊 Implementation Details
@@ -41,6 +42,7 @@ A desktop tool that bundles multiple developer and creator tools for offline use
 | PDF to Images | Python (pdf2image) | pdf2image, Pillow, poppler | 0KB (runtime install) |
 | Port Scanner | Python (socket) | Built-in | 0KB |
 | Process Manager | Python (psutil) | psutil | 0KB (runtime install) |
+| System Info | Python (psutil) | psutil | 0KB (runtime install) |
 | JSON Formatter | Client-side React | None | 0KB |
 | QR Code Generator | Client-side React | qrcode-generator | +15KB |
 | Image Format Converter | Client-side React | Canvas API | 0KB |
