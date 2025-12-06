@@ -32,6 +32,7 @@ pub async fn run_python_tool(tool: String, params: Value) -> Result<Value, Strin
         "pdf_merger" => "merge",
         "port_scanner" => "scan",
         "process_manager" => "manage",
+        "pdf_to_images" => "convert",
         _ => &tool.replace("_", ""),
     };
 
@@ -268,6 +269,24 @@ pub async fn check_psutil() -> Result<serde_json::Value, String> {
     }
 }
 
+/// Check if pdf2image is installed
+#[tauri::command]
+pub async fn check_pdf2image() -> Result<serde_json::Value, String> {
+    let output = Command::new("/usr/bin/python3")
+        .arg("-c")
+        .arg("import pdf2image")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({"success": true}))
+        }
+        _ => Ok(serde_json::json!({"success": false}))
+    }
+}
+
 /// Check if Pillow (PIL) is installed
 #[tauri::command]
 pub async fn check_pillow() -> Result<serde_json::Value, String> {
@@ -456,6 +475,67 @@ pub async fn install_psutil() -> Result<serde_json::Value, String> {
                     Ok(serde_json::json!({
                         "success": false,
                         "message": format!("Failed to install psutil: {}", stderr)
+                    }))
+                }
+            }
+        }
+        Err(e) => {
+            Ok(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to run pip: {}", e)
+            }))
+        }
+    }
+}
+
+/// Install pdf2image using pip
+#[tauri::command]
+pub async fn install_pdf2image() -> Result<serde_json::Value, String> {
+    // Try user installation first with clean environment
+    let output = Command::new("/usr/bin/python3")
+        .arg("-m")
+        .arg("pip")
+        .arg("install")
+        .arg("pdf2image>=1.16.0")
+        .arg("--user")
+        .arg("--break-system-packages")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .env("PYTHONUNBUFFERED", "1")
+        .output();
+    
+    match output {
+        Ok(output) if output.status.success() => {
+            Ok(serde_json::json!({
+                "success": true,
+                "message": "pdf2image installed successfully"
+            }))
+        }
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            // Try without --break-system-packages
+            let fallback_output = Command::new("/usr/bin/python3")
+                .arg("-m")
+                .arg("pip")
+                .arg("install")
+                .arg("pdf2image>=1.16.0")
+                .arg("--user")
+                .env_remove("PYTHONHOME")
+                .env_remove("PYTHONPATH")
+                .env("PYTHONUNBUFFERED", "1")
+                .output();
+            
+            match fallback_output {
+                Ok(fallback_output) if fallback_output.status.success() => {
+                    Ok(serde_json::json!({
+                        "success": true,
+                        "message": "pdf2image installed successfully"
+                    }))
+                }
+                _ => {
+                    Ok(serde_json::json!({
+                        "success": false,
+                        "message": format!("Failed to install pdf2image: {}", stderr)
                     }))
                 }
             }

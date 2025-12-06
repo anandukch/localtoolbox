@@ -12,6 +12,7 @@ interface SetupStatus {
   pypdf2: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   ffmpeg: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
   psutil: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
+  pdf2image: 'checking' | 'found' | 'missing' | 'installing' | 'installed';
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => {
@@ -21,7 +22,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
     pillow: 'checking',
     pypdf2: 'checking',
     ffmpeg: 'checking',
-    psutil: 'checking'
+    psutil: 'checking',
+    pdf2image: 'checking'
   });
   const [isInstalling, setIsInstalling] = useState(false);
   const [installLog, setInstallLog] = useState<string[]>([]);
@@ -81,9 +83,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         } else {
           addToLog('✗ psutil not found');
         }
+        
+        // Check pdf2image
+        const pdf2imageCheck = await invoke<{success: boolean}>('check_pdf2image');
+        setStatus(prev => ({ ...prev, pdf2image: pdf2imageCheck.success ? 'found' : 'missing' }));
+        
+        if (pdf2imageCheck.success) {
+          addToLog('✓ pdf2image found');
+        } else {
+          addToLog('✗ pdf2image not found');
+        }
       } else {
         addToLog('✗ Python 3 not found');
-        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing', pypdf2: 'missing', psutil: 'missing' }));
+        setStatus(prev => ({ ...prev, moviepy: 'missing', pillow: 'missing', pypdf2: 'missing', psutil: 'missing', pdf2image: 'missing' }));
       }
       
       // Check FFmpeg
@@ -175,6 +187,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
         }
       }
       
+      // Install pdf2image if missing
+      if (status.pdf2image === 'missing') {
+        setStatus(prev => ({ ...prev, pdf2image: 'installing' }));
+        addToLog('Installing pdf2image...');
+        
+        const pdf2imageResult = await invoke<{success: boolean, message: string}>('install_pdf2image');
+        
+        if (pdf2imageResult.success) {
+          setStatus(prev => ({ ...prev, pdf2image: 'installed' }));
+          addToLog('✓ pdf2image installed successfully');
+        } else {
+          setStatus(prev => ({ ...prev, pdf2image: 'missing' }));
+          addToLog(`✗ Failed to install pdf2image: ${pdf2imageResult.message}`);
+          setError(`Failed to install pdf2image: ${pdf2imageResult.message}`);
+        }
+      }
+      
       // Install FFmpeg if missing (this might require sudo)
       if (status.ffmpeg === 'missing') {
         setStatus(prev => ({ ...prev, ffmpeg: 'installing' }));
@@ -205,11 +234,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
            (status.moviepy === 'found' || status.moviepy === 'installed') &&
            (status.pillow === 'found' || status.pillow === 'installed') &&
            (status.pypdf2 === 'found' || status.pypdf2 === 'installed') &&
-           (status.psutil === 'found' || status.psutil === 'installed');
+           (status.psutil === 'found' || status.psutil === 'installed') &&
+           (status.pdf2image === 'found' || status.pdf2image === 'installed');
   };
 
   const needsInstallation = () => {
-    return status.moviepy === 'missing' || status.pillow === 'missing' || status.pypdf2 === 'missing' || status.psutil === 'missing' || status.ffmpeg === 'missing';
+    return status.moviepy === 'missing' || status.pillow === 'missing' || status.pypdf2 === 'missing' || status.psutil === 'missing' || status.pdf2image === 'missing' || status.ffmpeg === 'missing';
   };
 
   useEffect(() => {
@@ -295,6 +325,14 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onSetupComplete }) => 
               <div className="flex items-center space-x-2">
                 {getStatusIcon(status.psutil)}
                 <span className="text-sm text-gray-400 capitalize">{status.psutil}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">pdf2image</span>
+              <div className="flex items-center space-x-2">
+                {getStatusIcon(status.pdf2image)}
+                <span className="text-sm text-gray-400 capitalize">{status.pdf2image}</span>
               </div>
             </div>
             

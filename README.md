@@ -22,11 +22,13 @@ A desktop tool that bundles multiple developer and creator tools for offline use
 ### 📄 Document Tools
 
 - **PDF Merger**: Combine multiple PDF files into a single document
+- **PDF to Images**: Convert PDF pages to JPG or PNG images
 - **JSON Formatter**: Pretty-print, validate, and analyze JSON data
 
 ### 🔧 Developer Tools
 
 - **Port Scanner**: Check open ports on localhost with process identification
+- **Process Manager**: View and manage system processes, similar to top command
 - **QR Code Generator**: Create QR codes for text, URLs, WiFi, contacts, and more
 
 ### 📊 Implementation Details
@@ -36,7 +38,9 @@ A desktop tool that bundles multiple developer and creator tools for offline use
 | Add Audio to Video | Python (MoviePy) | MoviePy, FFmpeg | 0KB (runtime install) |
 | Image Compressor | Python (Pillow) | Pillow | 0KB (runtime install) |
 | PDF Merger | Python (PyPDF2) | PyPDF2 | 0KB (runtime install) |
+| PDF to Images | Python (pdf2image) | pdf2image, Pillow, poppler | 0KB (runtime install) |
 | Port Scanner | Python (socket) | Built-in | 0KB |
+| Process Manager | Python (psutil) | psutil | 0KB (runtime install) |
 | JSON Formatter | Client-side React | None | 0KB |
 | QR Code Generator | Client-side React | qrcode-generator | +15KB |
 | Image Format Converter | Client-side React | Canvas API | 0KB |
