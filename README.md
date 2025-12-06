@@ -18,6 +18,7 @@ A desktop tool that bundles multiple developer and creator tools for offline use
 - **Add Audio to Video**: Combine video files with audio tracks using MoviePy
 - **Image Compressor**: Reduce image file sizes while maintaining quality
 - **Image Format Converter**: Convert between PNG, JPG, and WebP formats with quality control
+- **Favicon Generator**: Create favicons in multiple sizes from images
 
 ### 📄 Document Tools
 
@@ -46,6 +47,7 @@ A desktop tool that bundles multiple developer and creator tools for offline use
 | JSON Formatter | Client-side React | None | 0KB |
 | QR Code Generator | Client-side React | qrcode-generator | +15KB |
 | Image Format Converter | Client-side React | Canvas API | 0KB |
+| Favicon Generator | Client-side React | Canvas API | 0KB |
 
 > **Note**: Python tools use runtime dependency installation, keeping the initial app download small (~50MB) while ensuring all functionality is available after first-time setup.
 
